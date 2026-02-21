@@ -66,8 +66,11 @@ export default function App() {
   const fetchReceipts = async () => {
     try {
       const res = await fetch('/api/receipts');
+      if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
-      setReceipts(data);
+      if (Array.isArray(data)) {
+        setReceipts(data);
+      }
     } catch (err) {
       console.error("Failed to fetch receipts", err);
     }
@@ -130,15 +133,23 @@ export default function App() {
 
   const saveReceipt = async (receipt: Receipt) => {
     try {
-      await fetch('/api/receipts', {
+      const res = await fetch('/api/receipts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receipt)
       });
-      fetchReceipts();
-      setState('LIST');
+      
+      if (res.ok) {
+        await fetchReceipts();
+        setState('LIST');
+      } else {
+        const errData = await res.json();
+        console.error("Failed to save receipt:", errData);
+        alert("Failed to save receipt. Please try again.");
+      }
     } catch (err) {
       console.error("Failed to save receipt", err);
+      alert("Network error. Please check your connection.");
     }
   };
 

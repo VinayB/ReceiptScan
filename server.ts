@@ -16,13 +16,19 @@ db.exec(`
     merchant TEXT NOT NULL,
     date TEXT NOT NULL,
     amount REAL NOT NULL,
-    tax REAL,
     currency TEXT NOT NULL DEFAULT 'USD',
     category TEXT NOT NULL,
     image_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Migration: Add tax column if it doesn't exist
+const tableInfo = db.prepare("PRAGMA table_info(receipts)").all() as any[];
+const hasTax = tableInfo.some(col => col.name === 'tax');
+if (!hasTax) {
+  db.exec("ALTER TABLE receipts ADD COLUMN tax REAL");
+}
 
 async function startServer() {
   const app = express();
