@@ -25,7 +25,9 @@ import {
   CreditCard,
   Tag,
   Info,
-  RotateCcw
+  RotateCcw,
+  Paperclip,
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -315,7 +317,8 @@ function ReviewDetailView({ image, initialData, onRetake, onConfirm }: any) {
     merchant: '',
     date: new Date().toISOString().split('T')[0],
     amount: 0,
-    currency: 'USD',
+    tax: 0,
+    currency: 'INR',
     category: 'Other'
   });
 
@@ -403,6 +406,21 @@ function ReviewDetailView({ image, initialData, onRetake, onConfirm }: any) {
 
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
+              <Info size={18} className="text-blue-600" />
+              Tax Amount (Optional)
+            </label>
+            <input 
+              type="number"
+              step="0.01"
+              className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none transition-all text-base font-medium"
+              placeholder="0.00"
+              value={formData.tax || ''}
+              onChange={e => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
               <Tag size={18} className="text-blue-600" />
               Category
             </label>
@@ -447,7 +465,13 @@ function ReviewDetailView({ image, initialData, onRetake, onConfirm }: any) {
 }
 
 function ReceiptListView({ receipts, onAdd, onDelete }: any) {
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const total = receipts.reduce((acc: number, r: Receipt) => acc + r.amount, 0);
+  const totalTax = receipts.reduce((acc: number, r: Receipt) => {
+    // Use stored tax if available, otherwise calculate using standard 7% inclusive VAT
+    if (r.tax !== undefined && r.tax !== null) return acc + r.tax;
+    return acc + (r.amount - (r.amount / 1.07));
+  }, 0);
   const avg = receipts.length > 0 ? total / receipts.length : 0;
 
   // Chart data
@@ -512,9 +536,22 @@ function ReceiptListView({ receipts, onAdd, onDelete }: any) {
                     </p>
                   </div>
                   <div className="flex justify-between items-center mt-1">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} • {r.category}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} • {r.category}
+                      </p>
+                      {r.image_url && (
+                        <div className="flex items-center gap-1 text-blue-500">
+                          <Paperclip size={12} />
+                          <button 
+                            onClick={() => setPreviewImage(r.image_url!)}
+                            className="hover:underline text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            Preview
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button 
                       onClick={() => onDelete(r.id)}
                       className="text-slate-400 hover:text-red-500 transition-colors"
@@ -542,9 +579,30 @@ function ReceiptListView({ receipts, onAdd, onDelete }: any) {
             <div className="h-32 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3b82f622" />
+                  <Tooltip 
+                    cursor={{ fill: '#3b82f611' }}
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', 
+                      border: 'none', 
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: '#fff'
+                    }}
+                    itemStyle={{ color: '#60a5fa' }}
+                    formatter={(value: number) => [`${getCurrencySymbol(receipts[0]?.currency || 'INR')}${value.toFixed(2)}`, 'Amount']}
+                  />
+                  <Bar 
+                    dataKey="amount" 
+                    radius={[4, 4, 0, 0]}
+                    animationDuration={1000}
+                  >
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#2563eb' : '#3b82f666'} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={index % 2 === 0 ? '#2563eb' : '#3b82f666'} 
+                        className="hover:fill-blue-400 transition-colors duration-200 cursor-pointer"
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -554,7 +612,7 @@ function ReceiptListView({ receipts, onAdd, onDelete }: any) {
               <div className="text-right">
                 <p className="text-xs text-slate-500 dark:text-slate-400">Avg. per day</p>
                 <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {getCurrencySymbol(receipts[0]?.currency || 'USD')}{avg.toFixed(2)}
+                  {getCurrencySymbol(receipts[0]?.currency || 'INR')}{avg.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -567,13 +625,13 @@ function ReceiptListView({ receipts, onAdd, onDelete }: any) {
           <div>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Amount</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              {getCurrencySymbol(receipts[0]?.currency || 'USD')}{total.toFixed(2)}
+              {getCurrencySymbol(receipts[0]?.currency || 'INR')}{total.toFixed(2)}
             </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-slate-400">Inclusive of Tax</p>
             <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-              +{getCurrencySymbol(receipts[0]?.currency || 'USD')}{(total * 0.07).toFixed(2)} VAT
+              +{getCurrencySymbol(receipts[0]?.currency || 'INR')}{totalTax.toFixed(2)} VAT
             </p>
           </div>
         </div>
@@ -588,6 +646,35 @@ function ReceiptListView({ receipts, onAdd, onDelete }: any) {
           </button>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4"
+            onClick={() => setPreviewImage(null)}
+          >
+            <button 
+              className="absolute top-6 right-6 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+              onClick={() => setPreviewImage(null)}
+            >
+              <X size={24} />
+            </button>
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              src={previewImage} 
+              className="max-w-full max-h-[80vh] rounded-lg shadow-2xl object-contain"
+              alt="Receipt Preview"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="mt-4 text-white/60 text-sm font-medium">Tap anywhere to close</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

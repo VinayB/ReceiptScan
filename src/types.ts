@@ -3,6 +3,7 @@ export interface Receipt {
   merchant: string;
   date: string;
   amount: number;
+  tax?: number;
   currency: string;
   category: string;
   image_url?: string;

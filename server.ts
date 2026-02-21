@@ -16,6 +16,7 @@ db.exec(`
     merchant TEXT NOT NULL,
     date TEXT NOT NULL,
     amount REAL NOT NULL,
+    tax REAL,
     currency TEXT NOT NULL DEFAULT 'USD',
     category TEXT NOT NULL,
     image_url TEXT,
@@ -40,11 +41,11 @@ async function startServer() {
   });
 
   app.post("/api/receipts", (req, res) => {
-    const { merchant, date, amount, currency, category, image_url } = req.body;
+    const { merchant, date, amount, tax, currency, category, image_url } = req.body;
     try {
       const info = db.prepare(
-        "INSERT INTO receipts (merchant, date, amount, currency, category, image_url) VALUES (?, ?, ?, ?, ?, ?)"
-      ).run(merchant, date, amount, currency || 'USD', category, image_url);
+        "INSERT INTO receipts (merchant, date, amount, tax, currency, category, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      ).run(merchant, date, amount, tax, currency || 'USD', category, image_url);
       res.json({ id: info.lastInsertRowid });
     } catch (error) {
       console.error(error);

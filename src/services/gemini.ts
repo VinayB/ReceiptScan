@@ -6,6 +6,7 @@ export interface ExtractedReceipt {
   merchant: string;
   date: string;
   amount: number;
+  tax?: number;
   currency: string;
   category: string;
 }
@@ -26,7 +27,7 @@ export async function extractReceiptData(base64Image: string): Promise<Extracted
               },
             },
             {
-              text: "Extract the following details from this receipt: merchant name, date, total amount, currency code (e.g., USD, EUR, GBP, JPY, CAD, AUD, INR, AED), and a likely category (e.g., Food & Drinks, Travel, Supplies, Entertainment, Other). If the currency is not explicitly stated, infer it from the symbols or merchant location. Return the data in JSON format.",
+              text: "Extract the following details from this receipt: merchant name, date, total amount, tax amount (if explicitly listed), currency code (e.g., USD, EUR, GBP, JPY, CAD, AUD, INR, AED), and a likely category (e.g., Food & Drinks, Travel, Supplies, Entertainment, Other). If the currency is not explicitly stated, infer it from the symbols or merchant location. Return the data in JSON format.",
             },
           ],
         },
@@ -39,6 +40,7 @@ export async function extractReceiptData(base64Image: string): Promise<Extracted
             merchant: { type: Type.STRING },
             date: { type: Type.STRING, description: "ISO date or human readable date from receipt" },
             amount: { type: Type.NUMBER },
+            tax: { type: Type.NUMBER, description: "The tax amount if listed on the receipt" },
             currency: { type: Type.STRING },
             category: { type: Type.STRING },
           },
