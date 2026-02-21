@@ -25,5 +25,7 @@ export const CURRENCIES = [
   { code: 'GBP', symbol: '£' },
   { code: 'JPY', symbol: '¥' },
   { code: 'CAD', symbol: 'C$' },
-  { code: 'AUD', symbol: 'A$' }
+  { code: 'AUD', symbol: 'A$' },
+  { code: 'INR', symbol: '₹' },
+  { code: 'AED', symbol: 'د.إ' }
 ];

@@ -26,7 +26,7 @@ export async function extractReceiptData(base64Image: string): Promise<Extracted
               },
             },
             {
-              text: "Extract the following details from this receipt: merchant name, date, total amount, currency, and a likely category (e.g., Food & Drinks, Travel, Supplies, Entertainment, Other). Return the data in JSON format.",
+              text: "Extract the following details from this receipt: merchant name, date, total amount, currency code (e.g., USD, EUR, GBP, JPY, CAD, AUD, INR, AED), and a likely category (e.g., Food & Drinks, Travel, Supplies, Entertainment, Other). If the currency is not explicitly stated, infer it from the symbols or merchant location. Return the data in JSON format.",
             },
           ],
         },
