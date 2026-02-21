@@ -1,0 +1,5 @@
+{
+  "name": "SnapReceipt",
+  "description": "Smart receipt scanner with AI-powered extraction and expense tracking.",
+  "requestFramePermissions": ["camera"]
+}
